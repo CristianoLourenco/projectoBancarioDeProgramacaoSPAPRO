@@ -1,5 +1,4 @@
 
-
 //registar a conta de cadastro
 registo Conta 
 	literal numeroConta, codigoCliente
@@ -29,21 +28,24 @@ fimregisto
 	fimFuncao
 
 	//	Este procedimento conta o numero de linhas do meu ficheiro
-	procedimento contarLinhas(fficheiro file) 
+	funcao inteiro contarLinhas(fficheiro file) 
 		// A variavel tamanho diz o numero de clientes que estao no meu ficheiro
+		inteiro linhas
 		enquanto ftemlinha(file) faca
 	       fLerLinha(file)
-	       tamanhoClienteNoFicheiro <- tamanhoClienteNoFicheiro + 1
+	       linhas <- linhas + 1
 		fimenquanto
 		 ffechar(file)
-	fimProcedimento
+		 
+		 retorne linhas
+	fimFuncao
 
 	
 	// Esta funcao retorna um vector com todos os dados no ficheiro
 	funcao pessoa[] lerFicheiro(fficheiro file)
 		inteiro i
 
-		contarLinhas(file)
+		tamanhoClienteNoFicheiro <- contarLinhas(file)
 
 		// Abrindo novamente o ficheiro
 		file <- criarFicheiro()
@@ -55,9 +57,10 @@ fimregisto
 	     literal data[] <- strRepartir(content, ",")
 	      
 	      para i de 0 ate atamanho(data, 0)
-			clienteNoFicheiro[i].nome <- data[0]
-			clienteNoFicheiro[i].biOuNif <- data[1]
-			clienteNoFicheiro[i].telefone <- strValorInt(data[2])
+	      	clienteNoFicheiro[i].codigo<- data[0]
+			clienteNoFicheiro[i].nome <- data[1]
+			clienteNoFicheiro[i].biOuNif <- data[2]
+			clienteNoFicheiro[i].telefone <- strValorInt(data[3])
 //			clienteNoFicheiro[i].nif <-  data[2]
 	      fimpara
 
@@ -67,9 +70,10 @@ fimregisto
 		retorne clienteNoFicheiro
 	fimFuncao
 
+	// Salvar clientes no Ficheiro
 	procedimento salvarNoFicheiro(Pessoa p)
 		fficheiro file <- criarFicheiro()	
-			fescrever (file, p.nome+","+ p.biOuNif+","+ strIntParaStr(p.telefone)+"\n")
+			fescrever (file,p.codigo+","+  p.nome+","+ p.biOuNif+","+ strIntParaStr(p.telefone)+"\n")
 		ffechar(file)
 	fimprocedimento
 	
@@ -78,10 +82,10 @@ fimregisto
 
 
 	Pessoa clientes[] <- lerFicheiro(criarFicheiro())
-
+ 
 // ----------- Modulo para cadastrar cliente -----------------  //
-
 	
+	//Ao fazer o cadastro o atributo telefone nao deve terminar com espacos
  	funcao logico cadastrarCliente(Pessoa p)
  		// Esta variavel nos permite achar a posicao do cliente a ser cadastrado
  		inteiro posicaoNoArray
@@ -108,9 +112,25 @@ fimregisto
 		retorne clienteCadastrado
 	fimFuncao 
 
+
+	funcao logico actualizarDadosCliente(Pessoa p, inteiro codigoCliente)
+		inteiro  linhas ,i
+		fficheiro file <- criarFicheiro()
+		linhas <- contarlinhas(file)
+		
+
+		para i de 0 ate linhas
+			se i = codigoCliente entao
+			fescrever(file, p.nome+","+ p.biOuNif+","+ strIntParaStr(p.telefone)+"\n")
+			fimse
+		fimPara
+		ffechar(file)
+	retorne verdadeiro
+	fimFuncao 
+
 	
 	// Modelo Abertura de Conta
-	funcao logico abrirConta(literal biOuNif, inteiro tipoConta)
+	funcao logico abrirConta(Pessoa p, inteiro tipoConta)
 	//1 com base no biOuNif encontrar o cliente
 	//2 procurar no meu vector um cliente onde o seu biOuNif seja igual ao biOuNif informado
 		
@@ -118,7 +138,11 @@ fimregisto
 		inteiro i <- 0 
 	
 		repita 
-			se clientes[i].biOuNif = biOuNif entao  
+//			se  clientes[i].biOuNif <> p.biOuNif entao
+//				p.codigo <- strIntParaStr(tamanhoClienteNoFicheiro)
+//				cadastrarCliente(p)
+//			 
+			se clientes[i].biOuNif = p.biOuNif entao
 					contaCliente.estado <- verdadeiro
 					contaCliente.tipoConta <- tipoConta 
 					
@@ -133,17 +157,28 @@ fimregisto
 					fimse			
 				contaCliente.codigoCliente <- clientes[i].codigo
   				clientes[i].contaCliente <- contaCliente
+  				actualizarDadosCliente(clientes[i],strValorInt(clientes[i].codigo))
 			fimse
 			i <- i + 1
 		ate i = tamanhoClienteNoFicheiro
 		retorne verdadeiro 
 	fimFuncao
 
+	procedimento listarClientes()
+		inteiro i
+		para i de 0 ate (tamanhoClienteNoFicheiro-1)
+			mostre "\n"
+			mostre "Nome: ", Clientes[i].nome, ","
+			mostre "Bi/Nif: ", Clientes[i].biOuNif,","
+			mostre "Telefone: ", Clientes[i].telefone
+			mostre "----------------------------------"
+		fimPara
+	fimProcedimento
 //-------------------------------------------------------------------------
 
 inicio
 
-	inteiro tecla, tipoConta
+	inteiro tecla, tipoConta, i
 	literal biOuNif
 	Pessoa cliente
 
@@ -173,15 +208,19 @@ inicio
 			mostre "Digite o telefone: "
 			receba cliente.telefone
 			cliente.codigo <- strIntParaStr(tamanhoClienteNoFicheiro)
-		
+
 			limpatela
-			mostre cadastrarCliente(cliente)
+			cadastrarCliente(cliente)
 			
 		caso 2:   					//Modulo Listar clientes
 			mostre "Operacao 2\n\n"
 		caso 3:						//Modulo Abertura de conta
-			mostre "Informe o bi/Nif: "
-			leia biOuNif
+			mostre "Digite o nome: "
+			receba cliente.nome
+			mostre "Digite o Bi/Nif: "
+			receba cliente.biOuNif
+			mostre "Digite o telefone: "
+			receba cliente.telefone
 			mostre "Informe o Tipo de Conta\n"
 			mostre "0 - Particular\n"
 			mostre "1 - Empresa\n"
@@ -189,9 +228,10 @@ inicio
 			
 			leia tipoConta
 			 se tipoConta = 0 ou tipoConta = 1 entao
-					 abrirConta(biOuNif, tipoConta)
+					 abrirConta(cliente, tipoConta)
 			senao 
-					mostre "Falha no processo, repita a operação!"
+					mostre "Falha no processo, repita a operação!\nPressione qualquer tecla"
+					leia i
  			fimSe
 			limpaTela
 		caso 4:						//Modulo Depositar dinheiro
@@ -200,10 +240,19 @@ inicio
 			mostre "Operacao 5"
 		caso 6:						//Modulo Consultar dinheiro
 			mostre "Operacao 6"
-		caso 7:						//Modulo Transferir dinheiro
+		caso 7:						//Modulo Actualizar dinheiro
 			mostre "Operacao 7"
-		caso 8:						//Modulo Actualizar Dados do cliente
-			mostre "Operacao 8"
+			mostre "Digite o nome: "
+			receba cliente.nome
+			mostre "Digite o Bi/Nif: "
+			receba cliente.biOuNif
+			mostre "Digite o telefone: "
+			receba cliente.telefone
+			
+			actualizarDadosCliente(cliente,strValorInt(clientes[i].codigo))
+		caso 8:			//Modulo Listar Dados do cliente
+			limpaTela
+			listarClientes()
 		caso 9:						//TERMINAR
 			
 		defeito:
